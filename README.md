@@ -56,6 +56,7 @@ docker compose exec web php bin/console doctrine:migrations:migrate --no-interac
 Po poprawnym wykonaniu powyższych kroków usługi są dostępne pod adresami:
 
 *   **Aplikacja (Symfony):** [http://localhost:8080](http://localhost:8080)
+*   **Pobieranie danych z bazy (Endpoint):** [http://localhost:8080/get-stocks](http://localhost:8080/get-stocks)
 *   **Baza danych (phpMyAdmin):** [http://localhost:8081](http://localhost:8081)
     *   *Użytkownik:* `root`
     *   *Hasło:* `root`
