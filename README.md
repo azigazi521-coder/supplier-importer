@@ -62,6 +62,27 @@ Po poprawnym wykonaniu powyższych kroków usługi są dostępne pod adresami:
 
 ---
 
+## Import danych (Zasilanie bazy)
+
+Aby dodać początkowe wpisy i zaimportować dane z plików CSV do bazy danych, uruchom w terminalu następujące komendy:
+
+```bash
+# Import danych dla dostawcy 'trah'
+docker compose exec web php bin/console app:import-stock data/trah.csv trah
+
+# Import danych dla dostawcy 'lorotom'
+docker compose exec web php bin/console app:import-stock data/lorotom.csv lorotom
+```
+
+---
+
+## Pobranie danych
+
+Endpoint do weryfikacji poprawnosci danych jest dostępny pod adresam:
+
+*   **Pobieranie danych z bazy (Endpoint):** [http://localhost:8080/get-stocks](http://localhost:8080/get-stocks)
+---
+
 ## Przydatne komendy deweloperskie
 
 *   **Zatrzymanie kontenerów:** `docker compose down`
