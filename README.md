@@ -15,8 +15,8 @@ Przed uruchomieniem projektu upewnij się, że masz zainstalowane:
 ### 1. Klonowanie repozytorium
 Skopiuj projekt na swój dysk lokalny i wejdź do katalogu projektu:
 ```bash
-git clone https://github.com/azigazi521-coder/supplier-csv-parser.git
-cd supplier-csv-parser/
+git clone https://github.com/azigazi521-coder/supplier-importer.git
+cd supplier-importer/
 ```
 
 ### 2. Konfiguracja zmiennych środowiskowych
