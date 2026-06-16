@@ -76,13 +76,6 @@ docker compose exec web php bin/console app:import-stock data/lorotom.csv loroto
 
 ---
 
-## Pobranie danych
-
-Endpoint do weryfikacji poprawnosci danych jest dostępny pod adresam:
-
-*   **Pobieranie danych z bazy (Endpoint):** [http://localhost:8080/get-stocks](http://localhost:8080/get-stocks)
----
-
 ## Przydatne komendy deweloperskie
 
 *   **Zatrzymanie kontenerów:** `docker compose down`
