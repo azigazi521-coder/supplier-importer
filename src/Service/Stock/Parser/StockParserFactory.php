@@ -28,7 +28,7 @@ class StockParserFactory
 
         $key = strtolower($supplierName);
 
-        if (!isset($this->parsers[$supplierName])) {
+        if (!isset($this->parsers[$key])) {
             throw new \InvalidArgumentException(sprintf(
                 'Unknown supplier: "%s". Available suppliers: %s',
                 $supplierName,

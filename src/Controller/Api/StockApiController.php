@@ -34,8 +34,6 @@ class StockApiController extends AbstractController
             $hasEan ? $ean : null,
         );
 
-        dd($stockItems);
-
         $responseData = [];
         foreach ($stockItems as $item) {
             $responseData[] = [
