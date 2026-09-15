@@ -7,33 +7,22 @@ namespace App\Service\Stock;
 use App\Service\Stock\Exception\StockImportInputException;
 use App\Service\Stock\Parser\SupplierParserRegistryInterface;
 
-class StockImporter
+abstract class StockImporter implements StockImporterInterface
 {
     public function __construct(
         private readonly SupplierParserRegistryInterface $parserRegistry,
-        private readonly StockItemUpserter $stockItemUpserter,
-        private readonly StockImportBatchProcessor $batchProcessor,
     ) {}
 
-    public function import(string $filePath, string $supplierName): int
+    /**
+     * @return array{0: iterable, 1: string}
+     */
+    protected function prepareImport(string $filePath, string $supplierName): array
     {
         $this->validateFile($filePath);
 
         $canonicalSupplierName = $this->parserRegistry->getCanonicalSupplierName($supplierName);
         $parser = $this->parserRegistry->getParser($canonicalSupplierName);
-        $stockDataIterator = $parser->parse($filePath);
-        $processedCount = 0;
-
-        foreach ($stockDataIterator as $dto) {
-            $this->stockItemUpserter->upsert($canonicalSupplierName, $dto);
-
-            $processedCount++;
-            $this->batchProcessor->flushIfNeeded($processedCount);
-        }
-
-        $this->batchProcessor->finish();
-
-        return $processedCount;
+        return [$parser->parse($filePath), $canonicalSupplierName];
     }
 
     private function validateFile(string $filePath): void

@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Service\Stock\Exception\StockImportInputException;
-use App\Service\Stock\StockImporter;
+use App\Service\Stock\StockImportMode;
+use App\Service\Stock\StockImporterFactory;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -21,7 +22,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class StockImportCommand extends Command
 {
     public function __construct(
-        private readonly StockImporter $stockImporter
+        private readonly StockImporterFactory $stockImporterFactory
     ) {
         parent::__construct();
     }
@@ -30,7 +31,8 @@ class StockImportCommand extends Command
     {
         $this
             ->addArgument('filepath', InputArgument::REQUIRED, 'Absolute filepath to the CSV file')
-            ->addArgument('supplier', InputArgument::REQUIRED, 'Supplier name (e.g., trah, lorotom)');
+            ->addArgument('supplier', InputArgument::REQUIRED, 'Supplier name (e.g., trah, lorotom)')
+            ->addArgument('mode', InputArgument::OPTIONAL, 'Import mode: multiline (default: legacy)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -47,7 +49,10 @@ class StockImportCommand extends Command
         $io->text(sprintf('Processing file: %s', $filePath));
 
         try {
-            $processedRows = $this->stockImporter->import($filePath, $supplier);
+            $mode = $this->parseMode($input->getArgument('mode'));
+            $io->text(sprintf('Import mode: <info>%s</info>', $mode->value));
+            $importer = $this->stockImporterFactory->create($mode);
+            $processedRows = $importer->import($filePath, $supplier);
 
             $executionTime = microtime(true) - $startTime;
 
@@ -65,5 +70,24 @@ class StockImportCommand extends Command
             $io->error(sprintf('An error occurred during import: %s', $e->getMessage()));
             return Command::FAILURE;
         }
+    }
+
+    private function parseMode(mixed $mode): StockImportMode
+    {
+        if (null === $mode || '' === trim((string) $mode)) {
+            return StockImportMode::LEGACY;
+        }
+
+        $normalizedMode = strtolower(trim((string) $mode));
+
+        if (StockImportMode::MULTILINE->value === $normalizedMode) {
+            return StockImportMode::MULTILINE;
+        }
+
+        throw new StockImportInputException(sprintf(
+            'Unknown import mode "%s". Allowed mode: %s.',
+            $mode,
+            StockImportMode::MULTILINE->value,
+        ));
     }
 }

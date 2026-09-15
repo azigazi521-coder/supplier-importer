@@ -8,15 +8,13 @@ use Doctrine\ORM\EntityManagerInterface;
 
 final class StockImportBatchProcessor
 {
-    private const BATCH_SIZE = 50;
-
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
     ) {}
 
     public function flushIfNeeded(int $processedCount): void
     {
-        if (($processedCount % self::BATCH_SIZE) === 0) {
+        if (($processedCount % StockImportBatchConfiguration::SIZE) === 0) {
             $this->flushAndClear();
         }
     }
