@@ -36,7 +36,6 @@ class LorotomParser implements SupplierStockParserInterface
         try {
             $headers = fgetcsv($handle, 0, "\t", '"', "\\");
             if ($headers === false) {
-                fclose($handle);
                 return;
             }
 
@@ -44,7 +43,6 @@ class LorotomParser implements SupplierStockParserInterface
 
             foreach (self::REQUIRED_COLUMNS as $col) {
                 if (!isset($headerMap[$col])) {
-                    fclose($handle);
                     throw new StockImportInputException("Column '{$col}' is required in file '{$filePath}'.");
                 }
             }

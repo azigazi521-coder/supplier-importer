@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Service\Stock\Transformer;
 
-use App\Entity\StockItem;
 use App\Service\Stock\Parser\LorotomParser;
+use App\Service\Stock\Parser\StockValueNormalizer;
+use App\Service\Stock\Exception\StockImportInputException;
 use PHPUnit\Framework\TestCase;
 
 class LorotomTransformerTest extends TestCase
@@ -15,7 +16,7 @@ class LorotomTransformerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->parser = new LorotomParser();
+        $this->parser = new LorotomParser(new StockValueNormalizer());
         $this->tempFilePath = sys_get_temp_dir() . '/transformer_lorotom_' . uniqid() . '.csv';
     }
 
@@ -26,34 +27,58 @@ class LorotomTransformerTest extends TestCase
         }
     }
 
-    public function testTabSeparatedRecordTransformsToStockItemEntity(): void
+    public function testTabSeparatedRecordTransformsToDto(): void
     {
-        $headers = "our_code\tproducer_code\tname\tproducer\tquantity\tprice\tean";
-        $row = "0AUE001\tE001\tAUTOMAT ROZRUSZ\tSTATIM\t>30\t37,69\t5907659302477";
-        
+        $headers = "price\tean\tproducer\tour_code\tquantity\tname\tproducer_code";
+        $row = "37,69\t5907659302477\tSTATIM\t0AUE001\t>30\tAUTOMAT ROZRUSZ\tE001";
+
         file_put_contents($this->tempFilePath, implode("\n", [$headers, $row]));
 
         $parsedData = iterator_to_array($this->parser->parse($this->tempFilePath));
         $this->assertCount(1, $parsedData);
-        
-        $dto = array_shift($parsedData);
 
-        $stockItem = new StockItem();
-        $stockItem->setSupplier('lorotom');
-        $stockItem->setExternalId($dto->externalId);
-        $stockItem->setEan($dto->ean);
-        $stockItem->setMpn($dto->mpn);
-        $stockItem->setProducerName($dto->producerName);
-        $stockItem->setPrice($dto->price);
-        $stockItem->setQuantity($dto->quantity);
+        $dto = $parsedData[0];
 
-        $this->assertInstanceOf(StockItem::class, $stockItem);
-        $this->assertSame('lorotom', $stockItem->getSupplier());
-        $this->assertSame('0AUE001', $stockItem->getExternalId());
-        $this->assertSame('E001', $stockItem->getMpn());
-        $this->assertSame('STATIM', $stockItem->getProducerName());
-        $this->assertSame('5907659302477', $stockItem->getEan());
-        $this->assertSame(37.69, (float) $stockItem->getPrice());
-        $this->assertSame(31, $stockItem->getQuantity());
+        $this->assertSame('0AUE001', $dto->externalId);
+        $this->assertSame('E001', $dto->mpn);
+        $this->assertSame('STATIM', $dto->producerName);
+        $this->assertSame('5907659302477', $dto->ean);
+        $this->assertSame('37.69', $dto->price);
+        $this->assertSame(31, $dto->quantity);
+    }
+
+    public function testEmptyEanIsNormalizedToNull(): void
+    {
+        file_put_contents($this->tempFilePath, implode("\n", [
+            "our_code\tproducer_code\tproducer\tquantity\tprice\tean",
+            "0AUE002\tE002\tSTATIM\t5\t10,00\t",
+        ]));
+
+        $parsedData = iterator_to_array($this->parser->parse($this->tempFilePath));
+
+        $this->assertNull($parsedData[0]->ean);
+    }
+
+    public function testMissingRequiredColumnThrowsInputException(): void
+    {
+        file_put_contents($this->tempFilePath, "our_code\tproducer_code\tproducer\tquantity\tprice\n");
+
+        $this->expectException(StockImportInputException::class);
+        iterator_to_array($this->parser->parse($this->tempFilePath));
+    }
+
+    public function testEmptyAndIncompleteRowsAreSkipped(): void
+    {
+        file_put_contents($this->tempFilePath, implode("\n", [
+            "our_code\tproducer_code\tproducer\tquantity\tprice\tean",
+            "\t\t\t\t\t",
+            "incomplete\trow",
+            "0AUE003\tE003\tSTATIM\t2\t5,00\t5900000000000",
+        ]));
+
+        $parsedData = iterator_to_array($this->parser->parse($this->tempFilePath));
+
+        $this->assertCount(1, $parsedData);
+        $this->assertSame('0AUE003', $parsedData[0]->externalId);
     }
 }
