@@ -1,6 +1,6 @@
 services:
   web:
-    image: webdevops/php-nginx-dev:8.4
+    build: .
     container_name: symfony_web
     working_dir: /app
     ports:
