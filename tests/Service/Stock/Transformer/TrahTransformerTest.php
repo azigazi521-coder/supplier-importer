@@ -54,6 +54,15 @@ class TrahTransformerTest extends TestCase
         $this->assertEmpty($parsedData);
     }
 
+    public function testEmptyEanIsNormalizedToNull(): void
+    {
+        file_put_contents($this->tempFilePath, '"000 016";3;12,00;19-600;;"AMTRA"');
+
+        $parsedData = iterator_to_array($this->parser->parse($this->tempFilePath));
+
+        $this->assertNull($parsedData[0]->ean);
+    }
+
     public function testEmptyAndIncompleteRowsAreSkipped(): void
     {
         file_put_contents($this->tempFilePath, implode("\n", [
