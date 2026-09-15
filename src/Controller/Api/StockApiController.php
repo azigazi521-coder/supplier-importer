@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Controller\Api;
 
 use App\Repository\StockItemRepository;
+use App\Service\Stock\Api\InvalidStockQueryException;
+use App\Service\Stock\Api\StockItemResponseMapper;
+use App\Service\Stock\Api\StockSearchCriteriaValidator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,40 +17,30 @@ use Symfony\Component\Routing\Attribute\Route;
 class StockApiController extends AbstractController
 {
     #[Route('/get-stocks', name: 'api_get_stocks', methods: ['GET'])]
-    public function getStocks(Request $request, StockItemRepository $stockItemRepository): JsonResponse
-    {
-        $mpn = $request->query->get('mpn');
-        $ean = $request->query->get('ean');
-
-        $hasMpn = is_string($mpn) && '' !== $mpn;
-        $hasEan = is_string($ean) && '' !== $ean;
-
-        if (!$hasMpn && !$hasEan) {
+    public function getStocks(
+        Request $request,
+        StockItemRepository $stockItemRepository,
+        StockSearchCriteriaValidator $criteriaValidator,
+        StockItemResponseMapper $responseMapper,
+    ): JsonResponse {
+        try {
+            $criteria = $criteriaValidator->validate(
+                $request->query->get('mpn'),
+                $request->query->get('ean'),
+            );
+        } catch (InvalidStockQueryException $exception) {
             return new JsonResponse([
                 'error' => 'Bad Request',
-                'message' => 'At least one query attribute (mpn or ean) must be specified.'
+                'message' => $exception->getMessage(),
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        $stockItems = $stockItemRepository->findByMpnOrEan(
-            $hasMpn ? $mpn : null,
-            $hasEan ? $ean : null,
+        $stockItems = $stockItemRepository->findByMpnOrEan($criteria->mpn, $criteria->ean);
+        $responseData = array_map(
+            fn ($stockItem): array => $responseMapper->map($stockItem),
+            $stockItems,
         );
 
-        $responseData = [];
-        foreach ($stockItems as $item) {
-            $responseData[] = [
-                'id' => $item->getId(),
-                'ean' => $item->getEan(),
-                'mpn' => $item->getMpn(),
-                'producer_name' => $item->getProducerName(),
-                'external_id' => $item->getExternalId(),
-                'price' => (float) $item->getPrice(),
-                'quantity' => $item->getQuantity(),
-                'supplier' => $item->getSupplier(),
-            ];
-        }
-
-        return new JsonResponse($responseData, Response::HTTP_OK);
+        return new JsonResponse($responseData);
     }
 }

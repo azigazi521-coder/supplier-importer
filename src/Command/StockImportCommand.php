@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Service\Stock\Exception\StockImportInputException;
 use App\Service\Stock\StockImporter;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -45,11 +46,6 @@ class StockImportCommand extends Command
         $io->title(sprintf('Starting stock import for supplier: <info>%s</info>', $supplier));
         $io->text(sprintf('Processing file: %s', $filePath));
 
-        if (!file_exists($filePath)) {
-            $io->error(sprintf('File does not exist: %s', $filePath));
-            return Command::FAILURE;
-        }
-
         try {
             $processedRows = $this->stockImporter->import($filePath, $supplier);
 
@@ -62,7 +58,7 @@ class StockImportCommand extends Command
                 $executionTime
             ));
             return Command::SUCCESS;
-        } catch (\InvalidArgumentException $e) {
+        } catch (StockImportInputException $e) {
             $io->error($e->getMessage());
             return Command::INVALID;
         } catch (\Exception $e) {

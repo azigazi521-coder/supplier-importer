@@ -24,22 +24,22 @@ class StockItem
     private ?string $ean = null;
 
     #[ORM\Column(length: 100)]
-    private ?string $mpn = null;
+    private string $mpn;
 
     #[ORM\Column(length: 255)]
-    private ?string $producerName = null;
+    private string $producerName;
 
     #[ORM\Column(length: 100)]
-    private ?string $externalId = null;
+    private string $externalId;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     private ?string $price = null;
 
     #[ORM\Column]
-    private ?int $quantity = null;
+    private int $quantity;
 
     #[ORM\Column(length: 100)]
-    private ?string $supplier = null;
+    private string $supplier;
 
     public function getId(): ?int
     {
@@ -58,7 +58,7 @@ class StockItem
         return $this;
     }
 
-    public function getMpn(): ?string
+    public function getMpn(): string
     {
         return $this->mpn;
     }
@@ -70,7 +70,7 @@ class StockItem
         return $this;
     }
 
-    public function getProducerName(): ?string
+    public function getProducerName(): string
     {
         return $this->producerName;
     }
@@ -82,7 +82,7 @@ class StockItem
         return $this;
     }
 
-    public function getExternalId(): ?string
+    public function getExternalId(): string
     {
         return $this->externalId;
     }
@@ -106,7 +106,7 @@ class StockItem
         return $this;
     }
 
-    public function getQuantity(): ?int
+    public function getQuantity(): int
     {
         return $this->quantity;
     }
@@ -118,7 +118,7 @@ class StockItem
         return $this;
     }
 
-    public function getSupplier(): ?string
+    public function getSupplier(): string
     {
         return $this->supplier;
     }
